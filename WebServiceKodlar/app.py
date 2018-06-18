@@ -2,18 +2,31 @@ import io
 import os
 import numpy as np
 from flask import Flask, render_template,request, jsonify, send_from_directory
+import flask
 from PIL import Image
 
 from keras.models import Sequential
 from keras.layers import Dense
 from keras.models import load_model
-from keras.preprocessing import image
-
+from keras.preprocessing.image import img_to_array
 
 model = load_model('model.h5')
 
 #initialize flask app
 app = Flask(__name__)
+
+def prepare_image(image, target):
+    # if the image mode is not RGB, convert it
+    if image.mode != "RGB":
+        image = image.convert("RGB")
+
+    # resize the input image and preprocess it
+    image = image.resize(target)
+    image = img_to_array(image)
+    image = np.expand_dims(image, axis=0)
+
+    # return the processed image
+    return image
 
 @app.route("/predict", methods=["POST"])
 def predict():
@@ -23,20 +36,25 @@ def predict():
 
 	# ensure an image was properly uploaded to our endpoint
 	if request.method == "POST" and request.files['image']:
-		imagefile = request.files["image"].read()
-		image = Image.open(io.BytesIO(imagefile))
+		image = flask.request.files["image"].read()
+		image = Image.open(io.BytesIO(image))
+		
+		image = prepare_image(image, target=(150, 150))
 		# indicate that the request was a success
 		data["success"] = True
 		
-		img_pred = image.img_to_array(image)
-		img_pred = np.expand_dims(img_pred, axis = 0)
-		result = model.predict(img_pred)
+		result = model.predict(image)
 		
-		data["result"] = result[0][0]
-		data["result_str"] = 'Tahmin: {}'.format("Lale" if result[0][0]==1 else "Papatya"
-	# return the data dictionary as a JSON response
+		data["class"] = str(result[0][0])
+		
+		if result[0][0] == 1:
+			data["class_str"] = "Lale"
+		elif result[0][0] == 0:
+			data["class_str"] = "Papatya"
+		else:
+			data["class_str"] = "Tespit edilemedi!"
+		
 	return jsonify(data)
-
 
 @app.route('/')
 def index():
@@ -48,4 +66,4 @@ if __name__ == "__main__":
 	#load_model()
 
 	port = int(os.environ.get('PORT', 5000))
-	app.run(host='0.0.0.0', port=port)
+	app.run(host='127.0.0.1', port=port)

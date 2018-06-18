@@ -43,35 +43,9 @@
 				<br>
 				<h3>API Kullanım</h3>
 				<h4>curl</h4>
-				<code>curl -X POST -F image=@resim1.jpg 'https://plant-recognation.herokuapp.com/predict'</code>
+				<code>curl -X POST -F image=@resim1.jpg 'https://bitki-tanima-projesi.herokuapp.com/predict'</code>
 				<h4>API Cevap</h4>
-				<code>
-						{
-							"predictions": [
-								{
-									"label": "macaw", 
-									"probability": 0.9999573230743408
-								}, 
-								{
-									"label": "lorikeet", 
-									"probability": 2.002095425268635e-05
-								}, 
-								{
-									"label": "bee_eater", 
-									"probability": 1.1819091014331207e-05
-								}, 
-								{
-									"label": "sulphur-crested_cockatoo", 
-									"probability": 2.9420689315884374e-06
-								}, 
-								{
-									"label": "African_grey", 
-									"probability": 2.350999011468957e-06
-								}
-							], 
-							"success": true
-						}							
-				</code>
+				<code>{"class":"1.0","class_str":"Lale","success":true}</code>
 			</div>
 		</div>
 
@@ -112,7 +86,7 @@
 			var form_data = new FormData($('#upload-file')[0]);
 			$.ajax({
 				type: 'POST',
-				url: '/save',
+				url: '/predict',
 				data: form_data,
 				contentType: false,
 				cache: false,
@@ -121,13 +95,7 @@
 				success: function (data) {
 					console.log(data.success);
 					$('.loader').hide();
-					$.each(data.predictions, function (i, item) {
-						console.log(item);
-						label = item["label"];
-						prob = item["probability"].toFixed(2);
-						percent = prob * 100;
-						$("#results").append('<label>' + percent + '% ' + label + '</label><div class="progress"><div class="progress-bar" role="progressbar" aria-valuenow="' + percent + '" aria-valuemin="0" aria-valuemax="100" style="width:' + percent + '%"></div></div>');
-					});
+					$("#results").append('<div>' + data.class_str + '</div>');
 				},
 			});
 		});
